@@ -4,12 +4,17 @@ View.Set ("graphics:1280;720, position:centre;middle, title: Rhythm Runner, nobu
 % Sets initial variables for music componenets.
 var iStartTime, iCurrentTime, iStartDelay, iBPM : int
 
-% Checks if key is pressed
-var bNonePressed, bBluePressed, bRedPressed : boolean := false
+% Checks current colour and new colour of sprite
+var iPrevColour, iNewColour, iPrevState : int := 0
 
 % Sets up the array of characters to check for key presses.
 var aKeysDown : array char of boolean
 
+% Sets up initial keybinds
+var cBlueKey, cRedKey : char
+
+cBlueKey := 'f'
+cRedKey := 'j'
 
 % Create the initial pictures and sprites.
 var pTitle, spTitle : int
@@ -80,10 +85,10 @@ end Note*/
 % Creates a character
 class Character
     inherit cSprite
-    export SetPic, SetColour, Move, SetShift
+    export SetPic, SetColour, GetColour, Move, SetShift
 
     % Variables needed.
-    var pIdle, pBlue, pRed, iShift : int
+    var pIdle, pBlue, pRed, iShift, iCurrColour : int
 
     % Gets all the images for the sprite
     procedure SetPic (inIdle, inBlue, inRed : string, scale : int)
@@ -102,29 +107,39 @@ class Character
         spSprite := Sprite.New (pIdle)
     end SetPic
 
-    procedure Move 
-	    Sprite.SetPosition (spSprite, iX, iY, true)
-    end Move
-
+    % Sets the sprite's colour
     procedure SetColour (inColour : int)
         case inColour of
             label 0 :
+                iCurrColour := 0
                 Sprite.ChangePic (spSprite, pIdle)
                 Sprite.SetPosition (spSprite, iX, iY, true)
             label 1 :
+                iCurrColour := 1
                 Sprite.ChangePic (spSprite, pBlue)
                 Sprite.SetPosition (spSprite, iX+iShift, iY, true)
             label 2 :
+                iCurrColour := 2
                 Sprite.ChangePic (spSprite, pRed)
                 Sprite.SetPosition (spSprite, iX+iShift, iY, true)
         end case
     end SetColour
+    
+    % Gets the sprites current colour
+    function GetColour : int
+        result iCurrColour
+    end GetColour
+
+    procedure Move 
+	    Sprite.SetPosition (spSprite, iX, iY, true)
+    end Move
 
     procedure SetShift (inShift : int)
         iShift := inShift
     end SetShift
 end Character
 
+% Create pointer
 type CharClass : pointer to Character
 
 % Creates procedure to generate character object
@@ -151,7 +166,7 @@ var obSwordsman : CharClass
 ConstructChar (obSwordsman, pCharIdle, pCharBlue, pCharRed, 300)
 
 
-% Start of program
+% ----------Menu screen----------
 % Draws background
 drawfillbox (0, 0, maxx, maxy, black)
 
@@ -176,7 +191,7 @@ colourback(black)
 locate (30, 40)
 put "Press space to play"
 
-
+% ----------Start of main game----------
 loop
     % Checks if space key has been pressed to start the game
     Input.KeyDown (aKeysDown)
@@ -224,41 +239,44 @@ loop
 
             % Get key input
             Input.KeyDown (aKeysDown)
+            
+            % Prev state is how many keys were being pressed
 
-            %Checking if the keys are being pressed, and then checking if they are being held down to avoid repeatedly setting the sprite to the same image.
-            if aKeysDown (' ') then
-                put iCurrentTime
-            end if
-            if aKeysDown ('f') then
-                if not bBluePressed then
-                    put "blue!"
-                    obSwordsman -> SetColour (1)
-                    bBluePressed := true
-                    bNonePressed := false
+            % Gets the colour 
+            iPrevColour := obSwordsman -> GetColour
+            iNewColour := 0
+            if aKeysDown (cBlueKey) and aKeysDown (cRedKey) then    % Checks if both keys are being pressed
+                if iPrevState = 2 then          % Checks if 2 keys were being pressed before
+                    iNewColour := iPrevColour
+                elsif iPrevColour = 1 then      % If not, if the previous colour was blue, then change it to red because red is more recent
+                    put "red"
+                    iNewColour := 2
+                else                            % If the previous colour was red, change the colour to blue, and if both are pressed at the same time, default to blue
+                    put "blue"
+                    iNewColour := 1
                 end if
-            else
-                bBluePressed := false
-            end if
-            if aKeysDown ('j') then
-                if not bRedPressed then
-                    put "red!"
-                    obSwordsman -> SetColour (2)
-                    bRedPressed := true
-                    bNonePressed := false
+                % Store that both the keys are being pressed down
+                iPrevState := 2
+            elsif aKeysDown (cBlueKey) then     % Checks if the blue key is being pressed
+                if iPrevColour = 0 then         % Checks if blue has been let go or not
+                    put "blue"
                 end if
-            else
-                bRedPressed := false
+                iPrevState := 1
+                iNewColour := 1
+            elsif aKeysDown (cRedKey) then      % Checks if the red key is being pressed
+                if iPrevColour = 0 then         % Checks if red has been let go or not
+                    put "red"
+                end if
+                iPrevState := 1
+                iNewColour := 2
+            else                                % If other keys or no keys are pressed set it to the idle animation
+                iPrevState := 0
             end if
-            if not (bBluePressed or bRedPressed) and not bNonePressed then 
-                put "reset!"
-                obSwordsman -> SetColour (0)
-                bNonePressed := true
-            end if
+
+            if iNewColour not= iPrevColour then % Checks if sprite is different as last frame, if so, change the sprite, if not, don't change it
+                obSwordsman -> SetColour (iNewColour)
+            end if 
+                       
         end loop
     end if
 end loop
-
-var lol : string
-
-
-get lol
