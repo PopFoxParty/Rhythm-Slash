@@ -31,6 +31,7 @@ class cSprite
         Sprite.Hide (spSprite)
     end Hide
 
+    % Frees the sprite in memory
     procedure FreeSprite 
         Sprite.Free (spSprite)
     end FreeSprite
