@@ -4,7 +4,7 @@ class Note
     export SetPic, SetNoteTime, SetSpawnTime, GetTime, SetEndPos, CalculateSlope, Move
 
     % Delare variables
-    var pNote, iEndX, iEndY, iNoteTime, iSpawnTime : int
+    var pNote, iEndX, iNoteTime, iSpawnTime : int
     var rSlope : real 
     
     % Set the picture for notes
@@ -44,9 +44,8 @@ class Note
     end GetTime
 
     % Sets the end position for the note
-    procedure SetEndPos (inX, inY : int)
+    procedure SetEndPos (inX : int)
         iEndX := inX
-        iEndY := inY
     end SetEndPos
 
     % Calculates the slope for the location of the note based on time
@@ -65,19 +64,20 @@ end Note
 type NoteClass : pointer to Note
 
 % Creates procedure to generate a note object
-procedure ConstructNote (var obNote : NoteClass, pImage : string, scale, iX, iY, iEndX, iEndY, iNoteTime, iSpawnTime : int)
+procedure ConstructNote (var obNote : NoteClass, pImage : string, scale, iX, iY, iEndX, iNoteTime, iSpawnTime : int)
     % Initialize object and enter default parameters
     new Note, obNote
     obNote -> SetPic (pImage, scale)
     obNote -> SetHeight (3)
     obNote -> SetX (iX)
     obNote -> SetY (iY)
-    obNote -> SetEndPos (iEndX, iEndY)
+    obNote -> SetEndPos (iEndX)
     obNote -> SetNoteTime (iNoteTime)
     obNote -> SetSpawnTime (iSpawnTime)
     obNote -> CalculateSlope
 end ConstructNote
 
+% Creates procedure to destroy the note object
 procedure DestructNote (var obNote : NoteClass)
     obNote -> FreeSprite
     free obNote
