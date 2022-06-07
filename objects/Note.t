@@ -1,12 +1,12 @@
 % Create note class
 class Note
     inherit cSprite
-    export SetPic, SetNoteTime, SetSpawnTime, GetTime, SetEndPos, CalculateSlope, Move
+    export SetPic, SetNoteTime, SetSpawnTime, GetTime, SetEndPos, CalculateSlope, GetX, Move
 
     % Delare variables
     var pNote, iEndX, iNoteTime, iSpawnTime : int
-    var rSlope : real 
-    
+    var rSlope : real     
+
     % Set the picture for notes
     procedure SetPic (inNote : string, iScale : int)
         % Create picture of note
@@ -59,6 +59,11 @@ class Note
         % Calculates the X position based on slope and time. Looks like my grade 9 math finally became useful for once.
         Sprite.SetPosition (spSprite, round(rSlope*(inTime-iSpawnTime)+iX), iY, true)
     end Move
+
+    function GetX (inTime : int) : int
+        % Calculates the X position based on slope and time. Looks like my grade 9 math finally became useful for once.
+        result round(rSlope*(inTime-iSpawnTime)+iX)
+    end GetX
 end Note
 
 type NoteClass : pointer to Note
@@ -79,6 +84,7 @@ end ConstructNote
 
 % Creates procedure to destroy the note object
 procedure DestructNote (var obNote : NoteClass)
+    obNote -> Hide
     obNote -> FreeSprite
     free obNote
 end DestructNote

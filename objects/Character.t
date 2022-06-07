@@ -73,7 +73,7 @@ procedure ConstructChar (var obChar : CharClass, pIdle, pBlue, pRed : string, iS
     % Initialize object and enter default parameters
     new Character, obChar
     obChar -> SetPic (pIdle, pBlue, pRed, iScale)
-    obChar -> SetHeight (2)
+    obChar -> SetHeight (1)
     obChar -> SetX (200)
     obChar -> SetY (200)
     obChar -> SetShift (188)
