@@ -9,16 +9,14 @@ include "objects/Hitmarker.t"
 
 % Sets initial variables for music componenets.
 var iStartTime, iCurrentTime, iStartDelay : int
-iStartDelay := -250 %520 when using with speakers, -250 with bluetooth JAM (make it negative to have music run earlier)
+iStartDelay := 0 %520 when using with speakers, -250 with bluetooth JAM (make it negative to have music run earlier)
 
 % Initializes variables for notes.
-var iNextBlue, iNextRed, iNoteSpawnMS, iBlueCount, iRedCount, iBufferTime, iTimingWindow : int
-iNextBlue := 0
-iNextRed := 0
-iBlueCount := 0
-iRedCount := 0
+var iNextBlue, iNextRed, iNoteSpawnMS, iBlueCount, iRedCount, iBufferTime, iTimingWindowGood, iTimingWindowGreat, iTimingWindowPerfect, iGoods, iGreats, iPerfects : int
 iBufferTime := 500
-iTimingWindow := 100
+iTimingWindowGood := 135
+iTimingWindowGreat := 90
+iTimingWindowPerfect := 45
 
 % Checks current colour and new colour of sprite
 var iPrevColour, iNewColour, iPrevState : int := 0
@@ -35,14 +33,12 @@ cRedKey := 'j'
 % Create the initial pictures and sprites.
 var pTitle, spTitle, pHitMarker, spHitMarker : int
 
-% Create test note
-var obTestNote, obTestNote2 : NoteClass
-var bTestNoteCreated, bTestNote2Created : boolean := false
+% Where to start creating notes (usually max screen size, set to 1280 for consistency when resizing)
 var iNoteStartX : int := 1280
 
 % Creates images for the character and notes.
 
-var sTitle, pCharIdle, pCharBlue, pCharRed, pNoteBlue, pNoteRed, sHitIdle, sHitBlue, sHitRed : string
+var sTitle, pCharIdle, pCharBlue, pCharRed, pNoteBlue, pNoteRed, pHitIdle, pHitBlue, pHitRed, sExplosion : string
 
 sTitle := "images/title.bmp"
 pCharIdle := "images/idle.bmp"
@@ -50,9 +46,10 @@ pCharBlue := "images/attackblue.bmp"
 pCharRed := "images/attackred.bmp"
 pNoteBlue := "images/blue.bmp"
 pNoteRed := "images/red.bmp"
-sHitIdle := "images/hitmark.bmp"
-sHitBlue := "images/hitmarkblue.bmp"
-sHitRed := "images/hitmarkred.bmp"
+pHitIdle := "images/hitmark.bmp"
+pHitBlue := "images/hitmarkblue.bmp"
+pHitRed := "images/hitmarkred.bmp"
+sExplosion := "images/explosion.bmp"
 
 var obSwordsman : CharClass
 
@@ -81,10 +78,133 @@ iNoteScale := 100
 iHitmarkerX := 500
 iHitmarkerY := 150
 
-ConstructHit(obHitmarker, sHitIdle, sHitBlue, sHitRed, iHitmarkerX, iHitmarkerY, iNoteScale)
+ConstructHit(obHitmarker, pHitIdle, pHitBlue, pHitRed, iHitmarkerX, iHitmarkerY, iNoteScale)
 
+% Creates explosion sprite
+var pExplosion, spExplosion : int
+pExplosion := Pic.FileNew (sExplosion)
+
+Pic.SetTransparentColour (pExplosion, black)
+
+pExplosion := Pic.Scale (pExplosion, iNoteScale + 10, iNoteScale + 10)
+
+spExplosion := Sprite.New (pExplosion)
+Sprite.SetHeight (spExplosion, 4)
+Sprite.SetPosition (spExplosion, 0, 0, true)
+Sprite.Hide (spExplosion)
+
+% Create explosion effect
+procedure Explosion (inX, inY : int)
+    Sprite.SetPosition (spExplosion, inX, inY, true)
+    Sprite.Show (spExplosion)
+end Explosion
+
+% Creates notes when they are needed
+procedure CreateNotes (aColourNotes : array 1 .. * of int, var aColourQ : array 1 .. * of NoteClass, var iCounter : int, iColourSelect : int)
+    if iCounter < upper(aColourNotes) then
+	if aColourNotes(iCounter + 1) <= iCurrentTime + iNoteSpawnMS + iBufferTime then
+	    iCounter += 1
+	    if iColourSelect = 1 then
+            ConstructNote (aColourQ(iCounter), pNoteBlue, iNoteScale, iNoteStartX, iHitmarkerY, iHitmarkerX, aColourNotes(iCounter), aColourNotes(iCounter) - iNoteSpawnMS)
+            aColourQ(iCounter) -> Show
+	    elsif iColourSelect = 2 then
+            ConstructNote (aColourQ(iCounter), pNoteRed, iNoteScale, iNoteStartX, iHitmarkerY, iHitmarkerX, aColourNotes(iCounter), aColourNotes(iCounter) - iNoteSpawnMS)
+            aColourQ(iCounter) -> Show
+	    end if
+	end if
+    end if
+end CreateNotes
+
+% Moves notes
+procedure MoveNotes (var aColourQ : array 1 .. * of NoteClass, iCurrentTime, iCounter : int, var iLowestNote : int)
+    if iCounter > 0 then
+	for noteNum : iLowestNote .. iCounter % Later change lowest value to last destroyed note + 1 (aka the oldest living note)
+	    aColourQ(noteNum) -> Move (iCurrentTime)
+	end for
+    end if
+end MoveNotes
+
+% Removes notes once they go too far off the screen
+procedure RemoveNotes (var aColourQ : array 1 .. * of NoteClass, aTimings : array 1 .. * of int, iCurrentTime : int, var iLowestNote : int, iCounter, iTimingWindow : int, var iCombo : int)
+    if iLowestNote <= iCounter then  % Check if array object has been initialized yet
+	if iCurrentTime - iTimingWindow - 10 > aTimings(iLowestNote) then
+	    DestructNote(aColourQ(iLowestNote))
+	    iLowestNote += 1
+	    iCombo := 0
+	    put "miss!"
+	end if
+    end if
+end RemoveNotes
+
+% Variable to check which note is hit
+var iHitBlue, iHitRed : int := 1
+
+procedure HitNotes (aTimings : array 1 .. * of int, var aColourQ : array 1 .. * of NoteClass, iCurrentTime : int, var iHitNote : int, var iScore : int, var iCombo : int, var iGoods, iGreats, iPerfects : int)
+    if iHitNote <= upper(aTimings) then
+	if aTimings(iHitNote) < iCurrentTime + iTimingWindowGood and aTimings(iHitNote) > iCurrentTime - iTimingWindowGood then
+	    if aTimings(iHitNote) < iCurrentTime + iTimingWindowGreat and aTimings(iHitNote) > iCurrentTime - iTimingWindowGreat then
+		if aTimings(iHitNote) < iCurrentTime + iTimingWindowPerfect and aTimings(iHitNote) > iCurrentTime - iTimingWindowPerfect then
+		    put "perfect hit!"
+		    iScore += 100
+            iPerfects += 1
+		else
+		    put "Great hit!"
+		    iScore += 75
+            iGreats += 1
+		end if
+	    else
+		    put "Good hit."
+            iGoods += 1
+		iScore += 50
+	    end if
+	    Explosion (aColourQ(iHitNote) -> GetX (iCurrentTime), iHitmarkerY)
+	    DestructNote(aColourQ(iHitNote))
+	    iHitNote += 1
+	    iCombo += 1
+	else 
+	    put "miss!"
+	    iCombo := 0
+	end if
+	
+    else
+	put "no more notes!"
+    end if
+end HitNotes
+
+% Plays menu music
+Music.PlayFileReturn ("music/Halcyon.mp3")
+
+% Places text
+colour(white)
+colourback(black)
+locate (30, 40)
+put "Press space to play"
+
+var iScore, iCombo : int
+
+% ----------Start of main game----------
+
+
+
+
+loop
+% Checks for start
+
+
+
+% ----------Sets score, combo, and notes to 0---------
+iGoods := 0
+iGreats := 0
+iPerfects := 0
+iScore := 0
+iCombo := 0
 
 % ----------Gets file for songs----------
+
+iNextBlue := 0
+iNextRed := 0
+iBlueCount := 0
+iRedCount := 0
 
 % Sets variables for reading files
 var sFile : string := "maps/crystallized.txt"
@@ -92,6 +212,9 @@ var iFileNum, iNoteColour, iNoteMS, iEndTime : int
 var aBlueNotes : flexible array 1 .. 0 of int
 var aRedNotes : flexible array 1 .. 0 of int
 var sSongFile : string
+
+
+var iLastBlue, iLastRed : int := 1
 
 open : iFileNum, sFile, get
 
@@ -113,88 +236,18 @@ loop
 end loop
 
 % Creates queue of blue and red notes
-var aBlueQ : array 1 .. upper(aBlueNotes) of NoteClass
-var aRedQ : array 1 .. upper(aRedNotes) of NoteClass
-var iLastBlue, iLastRed : int := 1
+var aBlueQ : flexible array 1 .. upper(aBlueNotes) of NoteClass
+var aRedQ : flexible array 1 .. upper(aRedNotes) of NoteClass
 
-% Creates notes when they are needed
-procedure CreateNotes (aColourNotes : array 1 .. * of int, var iCounter : int, iColourSelect : int)
-    if iCounter < upper(aColourNotes) then
-        if aColourNotes(iCounter + 1) <= iCurrentTime + iNoteSpawnMS + iBufferTime then
-            iCounter += 1
-            if iColourSelect = 1 then
-                ConstructNote (aBlueQ(iCounter), pNoteBlue, iNoteScale, iNoteStartX, iHitmarkerY, iHitmarkerX, aColourNotes(iCounter), aColourNotes(iCounter) - iNoteSpawnMS)
-                aBlueQ(iCounter) -> Show
-            elsif iColourSelect = 2 then
-                ConstructNote (aRedQ(iCounter), pNoteRed, iNoteScale, iNoteStartX, iHitmarkerY, iHitmarkerX, aColourNotes(iCounter), aColourNotes(iCounter) - iNoteSpawnMS)
-                aRedQ(iCounter) -> Show
-            end if
-        end if
-    end if
-end CreateNotes
+put "started!"
 
-% Moves notes
-procedure MoveNotes (var aColourQ : array 1 .. * of NoteClass, iCurrentTime, iCounter : int, var iLowestNote : int)
-    if iCounter > 0 then
-        for noteNum : iLowestNote .. iCounter % Later change lowest value to last destroyed note + 1 (aka the oldest living note)
-            aColourQ(noteNum) -> Move (iCurrentTime)
-        end for
-    end if
-end MoveNotes
-
-% Removes notes once they go too far off the screen
-procedure RemoveNotes (var aColourQ : array 1 .. * of NoteClass, aTimings : array 1 .. * of int, iCurrentTime : int, var iLowestNote : int, iCounter, iTimingWindow : int, var iCombo : int)
-    if iLowestNote <= iCounter then  % Check if array object has been initialized yet
-        if iCurrentTime - iTimingWindow - 10 > aTimings(iLowestNote) then
-            DestructNote(aColourQ(iLowestNote))
-            iLowestNote += 1
-            iCombo := 0
-            put "miss!"
-        end if
-    end if
-end RemoveNotes
-
-% Variable to check which note is hit
-var iHitBlue, iHitRed : int := 1
-
-procedure HitNotes (aTimings : array 1 .. * of int, var aColourQ : array 1 .. * of NoteClass, iCurrentTime : int, var iHitNote : int, iTimingWindow : int, var iScore : int, var iCombo : int)
-    if iHitNote <= upper(aTimings) then
-        if aTimings(iHitNote) < iCurrentTime + iTimingWindow and aTimings(iHitNote) > iCurrentTime - iTimingWindow then
-            put "hit!"
-            DestructNote(aColourQ(iHitNote))
-            iHitNote += 1
-            iScore += 100
-            iCombo += 1
-        else 
-            put "miss!"
-            iCombo := 0
-        end if
-    else
-        put "no more notes!"
-    end if
-    put "score: ", iScore
-    put "combo: ", iCombo
-end HitNotes
-
-% Plays menu music
-Music.PlayFileReturn ("music/Halcyon.mp3")
-
-% Places text
-colour(white)
-colourback(black)
-locate (30, 40)
-put "Press space to play"
-
-var iScore, iCombo : int := 0
-
-% ----------Start of main game----------
+% ----------Checks for game start-----------
 loop
     % Checks if space key has been pressed to start the game
     Input.KeyDown (aKeysDown)
     exit when aKeysDown (' ')
 end loop
 
-    
 %stops music
 Music.PlayFileStop
 
@@ -216,23 +269,22 @@ iStartTime := Time.Elapsed
 % Show the character
 obSwordsman -> Show
 
-
-put iEndTime
-
-
     % Core loop of spawning notes
 loop
     % Store the current time through the song
     iCurrentTime := Time.Elapsed - iStartTime + iStartDelay
 
-    CreateNotes (aBlueNotes, iBlueCount, 1)
-    MoveNotes (aBlueQ, iCurrentTime, iBlueCount, iLastBlue)
-    RemoveNotes (aBlueQ, aBlueNotes, iCurrentTime, iLastBlue, iBlueCount, iTimingWindow, iCombo)
-
-    CreateNotes (aRedNotes, iRedCount, 2)
-    MoveNotes (aRedQ, iCurrentTime, iRedCount, iLastRed)
-    RemoveNotes (aRedQ, aRedNotes, iCurrentTime, iLastRed, iRedCount, iTimingWindow, iCombo)     
-
+    if upper(aBlueNotes) > 0 then % Check if there are any notes in queue
+        CreateNotes (aBlueNotes, aBlueQ, iBlueCount, 1)
+        MoveNotes (aBlueQ, iCurrentTime, iBlueCount, iLastBlue)
+        RemoveNotes (aBlueQ, aBlueNotes, iCurrentTime, iLastBlue, iBlueCount, iTimingWindowGood, iCombo)
+    end if
+    
+    if upper(aRedNotes) > 0 then % Check if there are any notes in queue
+        CreateNotes (aRedNotes, aRedQ, iRedCount, 2)
+        MoveNotes (aRedQ, iCurrentTime, iRedCount, iLastRed)
+        RemoveNotes (aRedQ, aRedNotes, iCurrentTime, iLastRed, iRedCount, iTimingWindowGood, iCombo)
+    end if
     % Get key input
     Input.KeyDown (aKeysDown)
     
@@ -242,31 +294,39 @@ loop
     iPrevColour := obSwordsman -> GetColour
     iNewColour := 0
     if aKeysDown (cBlueKey) and aKeysDown (cRedKey) then    % Checks if both keys are being pressed
-        if iPrevState = 2 then          % Checks if 2 keys were being pressed before
-            iNewColour := iPrevColour
-        elsif iPrevColour = 1 then      % If not, if the previous colour was blue, then change it to red because red is more recent
-            HitNotes(aRedNotes, aRedQ, iCurrentTime, iLastRed, iTimingWindow, iScore, iCombo)
-            iNewColour := 2
-        else                            % If the previous colour was red, change the colour to blue, and if both are pressed at the same time, default to blue
-            HitNotes(aBlueNotes, aBlueQ, iCurrentTime, iLastBlue, iTimingWindow, iScore, iCombo)
-            iNewColour := 1
-        end if
-        % Store that both the keys are being pressed down
-        iPrevState := 2
+	if iPrevState = 2 then          % Checks if 2 keys were being pressed before
+	    iNewColour := iPrevColour
+	elsif iPrevColour = 1 then      % If not, if the previous colour was blue, then change it to red because red is more recent
+	    if upper(aRedNotes) > 0 then
+		    HitNotes(aRedNotes, aRedQ, iCurrentTime, iLastRed, iScore, iCombo, iGoods, iGreats, iPerfects)
+	    end if
+	    iNewColour := 2
+	else                            % If the previous colour was red, change the colour to blue, and if both are pressed at the same time, default to blue
+	    if upper(aBlueNotes) > 0 then
+		    HitNotes(aBlueNotes, aBlueQ, iCurrentTime, iLastBlue, iScore, iCombo, iGoods, iGreats, iPerfects)
+	    end if
+	    iNewColour := 1
+	end if
+	% Store that both the keys are being pressed down
+	iPrevState := 2
     elsif aKeysDown (cBlueKey) then     % Checks if the blue key is being pressed
-        if iPrevColour = 0 then         % Checks if blue has been let go or not
-            HitNotes(aBlueNotes, aBlueQ, iCurrentTime, iLastBlue, iTimingWindow, iScore, iCombo)
-        end if
-        iPrevState := 1
-        iNewColour := 1
+	if iPrevColour = 0 then         % Checks if blue has been let go or not
+	    if upper(aBlueNotes) > 0 then
+		    HitNotes(aBlueNotes, aBlueQ, iCurrentTime, iLastBlue, iScore, iCombo, iGoods, iGreats, iPerfects)
+	    end if
+	end if
+	iPrevState := 1
+	iNewColour := 1
     elsif aKeysDown (cRedKey) then      % Checks if the red key is being pressed
-        if iPrevColour = 0 then         % Checks if red has been let go or not
-            HitNotes(aRedNotes, aRedQ, iCurrentTime, iLastRed, iTimingWindow, iScore, iCombo)
-        end if
-        iPrevState := 1
-        iNewColour := 2
+	if iPrevColour = 0 then         % Checks if red has been let go or not
+	    if upper(aRedNotes) > 0 then
+		    HitNotes(aRedNotes, aRedQ, iCurrentTime, iLastRed, iScore, iCombo, iGoods, iGreats, iPerfects)
+	    end if
+	end if
+	iPrevState := 1
+	iNewColour := 2
     else                                % If other keys or no keys are pressed set it to the idle animation
-        iPrevState := 0
+	iPrevState := 0
     end if
 
     if iNewColour not= iPrevColour then % Checks if sprite is different as last frame, if so, change the sprite, if not, don't change it
@@ -278,3 +338,9 @@ loop
 end loop
 
 put "ended!"
+put "final score ", iScore
+put "final combo: ", iCombo
+put "total goods: ", iGoods
+put "total greats: ", iGreats
+put "total perfects: ", iPerfects
+end loop
