@@ -12,9 +12,9 @@ var iStartTime, iCurrentTime, iStartDelay : int
 iStartDelay := 0 %520 when using with speakers, -250 with bluetooth JAM (make it negative to have music run earlier)
 
 % Initializes variables for notes.
-var iNextBlue, iNextRed, iNoteSpawnMS, iBlueCount, iRedCount, iBufferTime, iTimingWindowGood, iTimingWindowGreat, iTimingWindowPerfect, iGoods, iGreats, iPerfects : int
+var iNextBlue, iNextRed, iNoteSpawnMS, iBlueCount, iRedCount, iBufferTime, iTimingWindowOkay, iTimingWindowGreat, iTimingWindowPerfect, iOkays, iGreats, iPerfects : int
 iBufferTime := 500
-iTimingWindowGood := 135
+iTimingWindowOkay := 135
 iTimingWindowGreat := 90
 iTimingWindowPerfect := 45
 
@@ -38,9 +38,9 @@ var iNoteStartX : int := 1280
 
 % Creates images for the character and notes.
 
-var sTitle, pCharIdle, pCharBlue, pCharRed, pNoteBlue, pNoteRed, pHitIdle, pHitBlue, pHitRed, sExplosion : string
+var sTitle, pCharIdle, pCharBlue, pCharRed, pNoteBlue, pNoteRed, pHitIdle, pHitBlue, pHitRed, sExplosionPerfect, sExplosionGreat, sExplosionOkay, sExplosionMiss : string
 
-sTitle := "images/title.bmp"
+sTitle := "images/logo.jpg"
 pCharIdle := "images/idle.bmp"
 pCharBlue := "images/attackblue.bmp"
 pCharRed := "images/attackred.bmp"
@@ -49,7 +49,10 @@ pNoteRed := "images/red.bmp"
 pHitIdle := "images/hitmark.bmp"
 pHitBlue := "images/hitmarkblue.bmp"
 pHitRed := "images/hitmarkred.bmp"
-sExplosion := "images/explosion.bmp"
+sExplosionPerfect := "images/explosionperfect.bmp"
+sExplosionGreat := "images/explosiongreat.bmp"
+sExplosionOkay := "images/explosionokay.bmp"
+sExplosionMiss := "images/explosionmiss.bmp"
 
 var obSwordsman : CharClass
 
@@ -81,22 +84,45 @@ iHitmarkerY := 150
 ConstructHit(obHitmarker, pHitIdle, pHitBlue, pHitRed, iHitmarkerX, iHitmarkerY, iNoteScale)
 
 % Creates explosion sprite
-var pExplosion, spExplosion : int
-pExplosion := Pic.FileNew (sExplosion)
+var pExplosionP, pExplosionG, pExplosionO, pExplosionM, spExplosion, iPrevEx : int
 
-Pic.SetTransparentColour (pExplosion, black)
+% Tracks previous explosion, checks if explosion sprite needs to be changed
+pExplosionP := Pic.FileNew (sExplosionPerfect)
+pExplosionG := Pic.FileNew (sExplosionGreat)
+pExplosionO := Pic.FileNew (sExplosionOkay)
+pExplosionM := Pic.FileNew (sExplosionMiss)
 
-pExplosion := Pic.Scale (pExplosion, iNoteScale + 10, iNoteScale + 10)
+Pic.SetTransparentColour (pExplosionP, black)
+Pic.SetTransparentColour (pExplosionG, black)
+Pic.SetTransparentColour (pExplosionO, black)
+Pic.SetTransparentColour (pExplosionM, black)
 
-spExplosion := Sprite.New (pExplosion)
+pExplosionP := Pic.Scale (pExplosionP, iNoteScale + 40, iNoteScale + 40)
+pExplosionG := Pic.Scale (pExplosionG, iNoteScale + 40, iNoteScale + 40)
+pExplosionO := Pic.Scale (pExplosionO, iNoteScale + 40, iNoteScale + 40)
+pExplosionM := Pic.Scale (pExplosionM, iNoteScale + 40, iNoteScale + 40)
+
+spExplosion := Sprite.New (pExplosionP)
+
 Sprite.SetHeight (spExplosion, 4)
-Sprite.SetPosition (spExplosion, 0, 0, true)
+Sprite.SetPosition (spExplosion, iHitmarkerX, iHitmarkerY, true)
 Sprite.Hide (spExplosion)
 
 % Create explosion effect
-procedure Explosion (inX, inY : int)
+procedure Explosion (inX, inY, iTimingWin : int, var iPrevTime : int)
     Sprite.SetPosition (spExplosion, inX, inY, true)
-    Sprite.Show (spExplosion)
+	if iPrevTime = 0 then
+		Sprite.Show (spExplosion)
+	end if
+	if iPrevTime not= iTimingWin then
+		case iTimingWin of
+			label 1 : Sprite.ChangePic (spExplosion, pExplosionP)
+			label 2 : Sprite.ChangePic (spExplosion, pExplosionG)
+			label 3 : Sprite.ChangePic (spExplosion, pExplosionO)
+			label 4 : Sprite.ChangePic (spExplosion, pExplosionM)
+		end case
+		iPrevTime := iTimingWin
+	end if
 end Explosion
 
 % Creates notes when they are needed
@@ -118,9 +144,9 @@ end CreateNotes
 % Moves notes
 procedure MoveNotes (var aColourQ : array 1 .. * of NoteClass, iCurrentTime, iCounter : int, var iLowestNote : int)
     if iCounter > 0 then
-	for noteNum : iLowestNote .. iCounter % Later change lowest value to last destroyed note + 1 (aka the oldest living note)
-	    aColourQ(noteNum) -> Move (iCurrentTime)
-	end for
+		for noteNum : iLowestNote .. iCounter % Later change lowest value to last destroyed note + 1 (aka the oldest living note)
+			aColourQ(noteNum) -> Move (iCurrentTime)
+		end for
     end if
 end MoveNotes
 
@@ -131,7 +157,6 @@ procedure RemoveNotes (var aColourQ : array 1 .. * of NoteClass, aTimings : arra
 	    DestructNote(aColourQ(iLowestNote))
 	    iLowestNote += 1
 	    iCombo := 0
-	    put "miss!"
 	end if
     end if
 end RemoveNotes
@@ -139,31 +164,30 @@ end RemoveNotes
 % Variable to check which note is hit
 var iHitBlue, iHitRed : int := 1
 
-procedure HitNotes (aTimings : array 1 .. * of int, var aColourQ : array 1 .. * of NoteClass, iCurrentTime : int, var iHitNote : int, var iScore : int, var iCombo : int, var iGoods, iGreats, iPerfects : int)
+procedure HitNotes (aTimings : array 1 .. * of int, var aColourQ : array 1 .. * of NoteClass, iCurrentTime : int, var iHitNote : int, var iScore : int, var iCombo : int, var iOkays, iGreats, iPerfects : int)
     if iHitNote <= upper(aTimings) then
-	if aTimings(iHitNote) < iCurrentTime + iTimingWindowGood and aTimings(iHitNote) > iCurrentTime - iTimingWindowGood then
+	if aTimings(iHitNote) < iCurrentTime + iTimingWindowOkay and aTimings(iHitNote) > iCurrentTime - iTimingWindowOkay then
 	    if aTimings(iHitNote) < iCurrentTime + iTimingWindowGreat and aTimings(iHitNote) > iCurrentTime - iTimingWindowGreat then
-		if aTimings(iHitNote) < iCurrentTime + iTimingWindowPerfect and aTimings(iHitNote) > iCurrentTime - iTimingWindowPerfect then
-		    put "perfect hit!"
-		    iScore += 100
-            iPerfects += 1
-		else
-		    put "Great hit!"
-		    iScore += 75
-            iGreats += 1
-		end if
+			if aTimings(iHitNote) < iCurrentTime + iTimingWindowPerfect and aTimings(iHitNote) > iCurrentTime - iTimingWindowPerfect then
+				iScore += 100
+				iPerfects += 1
+				Explosion (aColourQ(iHitNote) -> GetX (iCurrentTime), iHitmarkerY, 1, iPrevEx)
+			else
+				iScore += 75
+				iGreats += 1
+				Explosion (aColourQ(iHitNote) -> GetX (iCurrentTime), iHitmarkerY, 2, iPrevEx)
+			end if
 	    else
-		    put "Good hit."
-            iGoods += 1
-		iScore += 50
+			iScore += 50
+            iOkays += 1
+			Explosion (aColourQ(iHitNote) -> GetX (iCurrentTime), iHitmarkerY, 3, iPrevEx)
 	    end if
-	    Explosion (aColourQ(iHitNote) -> GetX (iCurrentTime), iHitmarkerY)
 	    DestructNote(aColourQ(iHitNote))
 	    iHitNote += 1
 	    iCombo += 1
 	else 
-	    put "miss!"
 	    iCombo := 0
+		Explosion (iHitmarkerX, iHitmarkerY, 4, iPrevEx)
 	end if
 	
     else
@@ -186,14 +210,15 @@ var iScore, iCombo : int
 
 
 
-
 loop
 % Checks for start
 
+% Makes previous explosion 0
+iPrevEx := 0
 
 
 % ----------Sets score, combo, and notes to 0---------
-iGoods := 0
+iOkays := 0
 iGreats := 0
 iPerfects := 0
 iScore := 0
@@ -239,8 +264,6 @@ end loop
 var aBlueQ : flexible array 1 .. upper(aBlueNotes) of NoteClass
 var aRedQ : flexible array 1 .. upper(aRedNotes) of NoteClass
 
-put "started!"
-
 % ----------Checks for game start-----------
 loop
     % Checks if space key has been pressed to start the game
@@ -254,7 +277,7 @@ Music.PlayFileStop
 % Hides menu sprite
 Sprite.Hide (spTitle)
 
-% Shows hit marker sprite
+% Shows hit marker sprite and explosion
 obHitmarker -> Show
 
 % Starts the music
@@ -277,13 +300,13 @@ loop
     if upper(aBlueNotes) > 0 then % Check if there are any notes in queue
         CreateNotes (aBlueNotes, aBlueQ, iBlueCount, 1)
         MoveNotes (aBlueQ, iCurrentTime, iBlueCount, iLastBlue)
-        RemoveNotes (aBlueQ, aBlueNotes, iCurrentTime, iLastBlue, iBlueCount, iTimingWindowGood, iCombo)
+        RemoveNotes (aBlueQ, aBlueNotes, iCurrentTime, iLastBlue, iBlueCount, iTimingWindowOkay, iCombo)
     end if
     
     if upper(aRedNotes) > 0 then % Check if there are any notes in queue
         CreateNotes (aRedNotes, aRedQ, iRedCount, 2)
         MoveNotes (aRedQ, iCurrentTime, iRedCount, iLastRed)
-        RemoveNotes (aRedQ, aRedNotes, iCurrentTime, iLastRed, iRedCount, iTimingWindowGood, iCombo)
+        RemoveNotes (aRedQ, aRedNotes, iCurrentTime, iLastRed, iRedCount, iTimingWindowOkay, iCombo)
     end if
     % Get key input
     Input.KeyDown (aKeysDown)
@@ -298,12 +321,12 @@ loop
 	    iNewColour := iPrevColour
 	elsif iPrevColour = 1 then      % If not, if the previous colour was blue, then change it to red because red is more recent
 	    if upper(aRedNotes) > 0 then
-		    HitNotes(aRedNotes, aRedQ, iCurrentTime, iLastRed, iScore, iCombo, iGoods, iGreats, iPerfects)
+		    HitNotes(aRedNotes, aRedQ, iCurrentTime, iLastRed, iScore, iCombo, iOkays, iGreats, iPerfects)
 	    end if
 	    iNewColour := 2
 	else                            % If the previous colour was red, change the colour to blue, and if both are pressed at the same time, default to blue
 	    if upper(aBlueNotes) > 0 then
-		    HitNotes(aBlueNotes, aBlueQ, iCurrentTime, iLastBlue, iScore, iCombo, iGoods, iGreats, iPerfects)
+		    HitNotes(aBlueNotes, aBlueQ, iCurrentTime, iLastBlue, iScore, iCombo, iOkays, iGreats, iPerfects)
 	    end if
 	    iNewColour := 1
 	end if
@@ -312,7 +335,7 @@ loop
     elsif aKeysDown (cBlueKey) then     % Checks if the blue key is being pressed
 	if iPrevColour = 0 then         % Checks if blue has been let go or not
 	    if upper(aBlueNotes) > 0 then
-		    HitNotes(aBlueNotes, aBlueQ, iCurrentTime, iLastBlue, iScore, iCombo, iGoods, iGreats, iPerfects)
+		    HitNotes(aBlueNotes, aBlueQ, iCurrentTime, iLastBlue, iScore, iCombo, iOkays, iGreats, iPerfects)
 	    end if
 	end if
 	iPrevState := 1
@@ -320,7 +343,7 @@ loop
     elsif aKeysDown (cRedKey) then      % Checks if the red key is being pressed
 	if iPrevColour = 0 then         % Checks if red has been let go or not
 	    if upper(aRedNotes) > 0 then
-		    HitNotes(aRedNotes, aRedQ, iCurrentTime, iLastRed, iScore, iCombo, iGoods, iGreats, iPerfects)
+		    HitNotes(aRedNotes, aRedQ, iCurrentTime, iLastRed, iScore, iCombo, iOkays, iGreats, iPerfects)
 	    end if
 	end if
 	iPrevState := 1
@@ -340,7 +363,7 @@ end loop
 put "ended!"
 put "final score ", iScore
 put "final combo: ", iCombo
-put "total goods: ", iGoods
+put "total goods: ", iOkays
 put "total greats: ", iGreats
 put "total perfects: ", iPerfects
 end loop
