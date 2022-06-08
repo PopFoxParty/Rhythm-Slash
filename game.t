@@ -9,7 +9,7 @@ include "objects/Hitmarker.t"
 
 % Sets initial variables for music componenets.
 var iStartTime, iCurrentTime, iStartDelay : int
-iStartDelay := 0 %520 when using with speakers, -250 with bluetooth JAM (make it negative to have music run earlier)
+iStartDelay := -50 %520 when using with speakers, -150 with bluetooth JAM (make it negative to have music run earlier)
 
 % Initializes variables for notes.
 var iNextBlue, iNextRed, iNoteSpawnMS, iBlueCount, iRedCount, iBufferTime, iTimingWindowOkay, iTimingWindowGreat, iTimingWindowPerfect, iOkays, iGreats, iPerfects : int
@@ -25,10 +25,13 @@ var iPrevColour, iNewColour, iPrevState : int := 0
 var aKeysDown : array char of boolean
 
 % Sets up initial keybinds
-var cBlueKey, cRedKey : char
+var cBlueKey1, cBlueKey2, cRedKey1, cRedKey2 : char
 
-cBlueKey := 'f'
-cRedKey := 'j'
+cBlueKey1 := 'd'
+cBlueKey2 := 'k'
+
+cRedKey1 := 'f'
+cRedKey2 := 'j'
 
 % Create the initial pictures and sprites.
 var pTitle, spTitle, pHitMarker, spHitMarker : int
@@ -38,7 +41,7 @@ var iNoteStartX : int := 1280
 
 % Creates images for the character and notes.
 
-var sTitle, pCharIdle, pCharBlue, pCharRed, pNoteBlue, pNoteRed, pHitIdle, pHitBlue, pHitRed, sExplosionPerfect, sExplosionGreat, sExplosionOkay, sExplosionMiss : string
+var sTitle, pCharIdle, pCharBlue, pCharRed, pNoteBlue, pNoteRed, pHitIdle, pHitBlue, pHitRed, sExplosionPerfect, sExplosionGreat, sExplosionOkay, sExplosionMiss, sBackground : string
 
 sTitle := "images/logo.jpg"
 pCharIdle := "images/idle.bmp"
@@ -53,10 +56,13 @@ sExplosionPerfect := "images/explosionperfect.bmp"
 sExplosionGreat := "images/explosiongreat.bmp"
 sExplosionOkay := "images/explosionokay.bmp"
 sExplosionMiss := "images/explosionmiss.bmp"
+sBackground := "images/cyberpunk.jpg"
 
 var obSwordsman : CharClass
 
 ConstructChar (obSwordsman, pCharIdle, pCharBlue, pCharRed, 300)
+
+var pBackground : int
 
 % ----------Menu screen----------
 % Draws background
@@ -85,6 +91,7 @@ ConstructHit(obHitmarker, pHitIdle, pHitBlue, pHitRed, iHitmarkerX, iHitmarkerY,
 
 % Creates explosion sprite
 var pExplosionP, pExplosionG, pExplosionO, pExplosionM, spExplosion, iPrevEx : int
+var bExplosionShown : boolean := false
 
 % Tracks previous explosion, checks if explosion sprite needs to be changed
 pExplosionP := Pic.FileNew (sExplosionPerfect)
@@ -157,6 +164,10 @@ procedure RemoveNotes (var aColourQ : array 1 .. * of NoteClass, aTimings : arra
 	    DestructNote(aColourQ(iLowestNote))
 	    iLowestNote += 1
 	    iCombo := 0
+		if bExplosionShown then
+			Sprite.Hide (spExplosion)
+			bExplosionShown := false
+		end if
 	end if
     end if
 end RemoveNotes
@@ -189,10 +200,17 @@ procedure HitNotes (aTimings : array 1 .. * of int, var aColourQ : array 1 .. * 
 	    iCombo := 0
 		Explosion (iHitmarkerX, iHitmarkerY, 4, iPrevEx)
 	end if
-	
+	if not bExplosionShown then
+		Sprite.Show (spExplosion)
+		bExplosionShown := true
+	end if
     else
 	put "no more notes!"
     end if
+	locatexy (1100, 40)
+	put "score: ", iScore
+	locatexy (1100, 20)
+	put "combo: ", iCombo
 end HitNotes
 
 % Plays menu music
@@ -232,7 +250,7 @@ iBlueCount := 0
 iRedCount := 0
 
 % Sets variables for reading files
-var sFile : string := "maps/crystallized.txt"
+var sFile : string := "maps/crystallizedhard.txt"
 var iFileNum, iNoteColour, iNoteMS, iEndTime : int
 var aBlueNotes : flexible array 1 .. 0 of int
 var aRedNotes : flexible array 1 .. 0 of int
@@ -274,8 +292,16 @@ end loop
 %stops music
 Music.PlayFileStop
 
+Draw.Cls
+
+
 % Hides menu sprite
 Sprite.Hide (spTitle)
+
+% Adds background
+pBackground := Pic.FileNew (sBackground)
+pBackground := Pic.Scale (pBackground, 1280, 720)
+Pic.Draw (pBackground, 0, 0, picCopy)
 
 % Shows hit marker sprite and explosion
 obHitmarker -> Show
@@ -316,7 +342,7 @@ loop
     % Gets the colour 
     iPrevColour := obSwordsman -> GetColour
     iNewColour := 0
-    if aKeysDown (cBlueKey) and aKeysDown (cRedKey) then    % Checks if both keys are being pressed
+    if (aKeysDown (cBlueKey1) or aKeysDown (cBlueKey2)) and (aKeysDown (cRedKey1) or aKeysDown (cRedKey2)) then    % Checks if both keys are being pressed
 	if iPrevState = 2 then          % Checks if 2 keys were being pressed before
 	    iNewColour := iPrevColour
 	elsif iPrevColour = 1 then      % If not, if the previous colour was blue, then change it to red because red is more recent
@@ -332,7 +358,7 @@ loop
 	end if
 	% Store that both the keys are being pressed down
 	iPrevState := 2
-    elsif aKeysDown (cBlueKey) then     % Checks if the blue key is being pressed
+    elsif aKeysDown (cBlueKey1) or aKeysDown (cBlueKey2) then     % Checks if the blue key is being pressed
 	if iPrevColour = 0 then         % Checks if blue has been let go or not
 	    if upper(aBlueNotes) > 0 then
 		    HitNotes(aBlueNotes, aBlueQ, iCurrentTime, iLastBlue, iScore, iCombo, iOkays, iGreats, iPerfects)
@@ -340,7 +366,7 @@ loop
 	end if
 	iPrevState := 1
 	iNewColour := 1
-    elsif aKeysDown (cRedKey) then      % Checks if the red key is being pressed
+    elsif aKeysDown (cRedKey1) or aKeysDown (cRedKey2) then      % Checks if the red key is being pressed
 	if iPrevColour = 0 then         % Checks if red has been let go or not
 	    if upper(aRedNotes) > 0 then
 		    HitNotes(aRedNotes, aRedQ, iCurrentTime, iLastRed, iScore, iCombo, iOkays, iGreats, iPerfects)
@@ -355,7 +381,7 @@ loop
     if iNewColour not= iPrevColour then % Checks if sprite is different as last frame, if so, change the sprite, if not, don't change it
         obSwordsman -> SetColour (iNewColour)
         obHitmarker -> SetColour (iNewColour)
-    end if 
+    end if
 
     exit when iCurrentTime > iEndTime + 5000
 end loop
