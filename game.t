@@ -1,7 +1,4 @@
-% Fix the jpg corruption in the title
-% Add combos, health
-
-
+% Add health
 
 % Sets up all the initial parameters for the game.
 View.Set ("graphics:1280;720, position:centre;middle, title: Rhythm Slash, nobuttonbar")
@@ -179,7 +176,6 @@ procedure RemoveNotes (var aColourQ : array 1 .. * of NoteClass, aTimings : arra
     end if
 end RemoveNotes
 
-
 procedure GetMultiplier (var rMultiplier : real, iCombo : int)
 	rMultiplier := 1 + intreal(iCombo) / 100
 end GetMultiplier
@@ -228,7 +224,6 @@ procedure HitNotes (aTimings : array 1 .. * of int, var aColourQ : array 1 .. * 
 	locatexy (1100, 20)
 	put "combo: ", iCombo
 end HitNotes
-
 
 % Plays menu music
 Music.PlayFileReturn ("music/Halcyon.mp3")
