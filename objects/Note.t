@@ -1,7 +1,7 @@
 % Create note class
 class Note
     inherit cSprite
-    export SetPic, SetNoteTime, SetSpawnTime, GetTime, SetEndPos, CalculateSlope, GetX, Move
+    export SetPic, SetNoteTime, SetSpawnTime, GetTime, SetEndPos, CalculateSlope, Move, GetX
 
     % Delare variables
     var pNote, iEndX, iNoteTime, iSpawnTime : int
@@ -19,13 +19,17 @@ class Note
         pNote := Pic.Scale (pNote, iScale, iScale)
 
         % Create sprite from image
-        spSprite := Sprite.New (pNote)
+        spSprite := Sprite.New (pNote)\
+        
+        % Hides sprite
+        Sprite.Hide (spSprite)
+
+        % Moves the sprite offscreen
+        Sprite.SetPosition (spSprite, 1780, 0, true)
 
         % Free the picture from memory
         Pic.Free (pNote)
 
-        % Hide sprite
-        Sprite.Hide (spSprite)
     end SetPic
 
     % Sets variable for the timing of the note
