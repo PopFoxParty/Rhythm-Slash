@@ -21,6 +21,6 @@ try:
                 timing = line.split(",")[2]
                 songMapOut.write(f"{noteColour}  {timing}\n") 
 except IndexError:
-    print("No file dropped! Please drag and drop an .osu file onto the python script to convert it!")
+    input("No file dropped! Please drag and drop an .osu file onto the python script to convert it! ")
 
 
