@@ -138,16 +138,15 @@ end Explosion
 % Creates notes when they are needed
 procedure CreateNotes (aColourNotes : array 1 .. * of int, var aColourQ : array 1 .. * of NoteClass, var iCounter : int, iColourSelect : int)
     if iCounter < upper(aColourNotes) then
-	if aColourNotes(iCounter + 1) <= iCurrentTime + iNoteSpawnMS + iBufferTime then
-	    iCounter += 1
-	    if iColourSelect = 1 then
-            ConstructNote (aColourQ(iCounter), pNoteBlue, iNoteScale, iNoteStartX, iHitmarkerY, iHitmarkerX, aColourNotes(iCounter), aColourNotes(iCounter) - iNoteSpawnMS)
-            aColourQ(iCounter) -> Show
-	    elsif iColourSelect = 2 then
-            ConstructNote (aColourQ(iCounter), pNoteRed, iNoteScale, iNoteStartX, iHitmarkerY, iHitmarkerX, aColourNotes(iCounter), aColourNotes(iCounter) - iNoteSpawnMS)
-            aColourQ(iCounter) -> Show
-	    end if
-	end if
+		if aColourNotes(iCounter + 1) <= iCurrentTime + iNoteSpawnMS + iBufferTime then
+			iCounter += 1
+			if iColourSelect = 1 then
+				ConstructNote (aColourQ(iCounter), pNoteBlue, iNoteScale, iNoteStartX, iHitmarkerY, iHitmarkerX, aColourNotes(iCounter), aColourNotes(iCounter) - iNoteSpawnMS)
+			elsif iColourSelect = 2 then
+				ConstructNote (aColourQ(iCounter), pNoteRed, iNoteScale, iNoteStartX, iHitmarkerY, iHitmarkerX, aColourNotes(iCounter), aColourNotes(iCounter) - iNoteSpawnMS)
+			end if
+			aColourQ(iCounter) -> Show
+		end if
     end if
 end CreateNotes
 
@@ -272,7 +271,7 @@ iRedCount := 0
 % Sets variables for reading files
 
 var sFile : string
-put "please input map file! (ex. crystallized_easy, crystallized_med, crystallized_hard)"
+put "please input map file! (ex. crystallized_easy, crystallized_med, crystallized_hard, quaoar_easy, quaoar_hard)"
 
 get sFile
 sFile := "maps/"+sFile+".txt"
