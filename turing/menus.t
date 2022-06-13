@@ -30,6 +30,23 @@ function Select (var cKey : char, var iSelection : int, iLower, iUpper : int) : 
 end Select
 
 
+function ReturnToSong (var cKey : char) : int
+    % Detect user input, then refer them to a specific screen
+    loop
+        if hasch then
+            cKey := getchar
+            case cKey of
+                label KEY_BACKSPACE :
+                    result 3
+                label ' ', KEY_ENTER :
+                    result 5
+                label KEY_ESC :
+                    quit
+                label :
+            end case
+        end if
+    end loop
+end ReturnToSong
 
 
 % ----------Menu screens----------
@@ -221,6 +238,7 @@ function PlayerSelect (var cKey : char, var iMultiplayer : int) : int
     end loop
 end PlayerSelect
 
+% Starts the actual game
 function MainGame : int
     loop
         % ----------Set variables to defaults----------
@@ -475,25 +493,14 @@ function MainGame : int
     result 4
 end MainGame
 
+% Displays a screen when you die
 function DeathScreen (var cKey : char) : int
     Draw.Cls
     Pic.Draw (pDeath, 0, 0, picCopy)
-    loop
-        if hasch then
-            cKey := getchar
-            case cKey of
-                label KEY_BACKSPACE :
-                    result 3
-                label ' ', KEY_ENTER :
-                    result 5
-                label KEY_ESC :
-                    quit
-                label :
-            end case
-        end if
-    end loop
+    result ReturnToSong (cKey)
 end DeathScreen
 
+% Displays a screen when you pass the game
 function PassScreen (var cKey : char) : int
     Draw.Cls
     Pic.Draw (pPass, 0, 0, picCopy)
@@ -505,45 +512,22 @@ function PassScreen (var cKey : char) : int
 	Draw.Text (intstr(iMisses), 370, 167, fontVeryLarge, white)	
     Draw.Text (intstr(round(((iPerfects * 1) + (iGreats * 0.5) + (iOkays * 0.2)) / iTotalNotes * 100))+"%", 900, 200, fontVeryLarge, white)
 
-    loop
-        if hasch then
-            cKey := getchar
-            case cKey of
-                label KEY_BACKSPACE :
-                    result 3
-                label ' ', KEY_ENTER :
-                    result 5
-                label KEY_ESC :
-                    quit
-                label :
-            end case
-        end if
-    end loop
+    result ReturnToSong (cKey)
 end PassScreen
 
+% Displays a screen for when switching turns from player 1 to player 2
 function Player2Turn (var cKey : char) : int
     Draw.Cls
     Pic.Draw (pPlayer2Turn, 0, 0, picCopy)
-    loop
-        if hasch then
-            cKey := getchar
-            case cKey of
-                label KEY_BACKSPACE :
-                    result 3
-                label ' ', KEY_ENTER :
-                    result 5
-                label KEY_ESC :
-                    quit
-                label :
-            end case
-        end if
-    end loop
+    result ReturnToSong (cKey)
 end Player2Turn
 
+% Displays the end screen if playing on multiplayer
 function MultiplayerEnd (var cKey : char) : int
     Draw.Cls
     Pic.Draw (pMultiplayer, 0, 0, picCopy)
 
+    % Draw all the text on screen
     if rPlayer1Score > rPlayer2Score then
         Draw.Text ("Player 1 Wins!", 400, 455, fontVeryLarge, white)	
     elsif rPlayer1Score < rPlayer2Score then
@@ -555,6 +539,7 @@ function MultiplayerEnd (var cKey : char) : int
     Draw.Text ("P1: " + realstr(rPlayer1Score, 2), 200, 290, fontVeryLarge, white)	
     Draw.Text ("P2: " + realstr(rPlayer2Score, 2), 200, 200, fontVeryLarge, white)	
 
+    % Exit when you press space or enter
     loop
         if hasch then
             cKey := getchar
