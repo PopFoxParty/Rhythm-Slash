@@ -192,8 +192,12 @@ function MapSelect (var cKey : char, aMapList : array 1 .. * of string, var sMap
             Draw.Cls
             Pic.Draw (pMapSelect, 0, 0, picCopy)
             if Select (cKey, iSelection, 1, upper(aMapList)) then
-                sMapChosen := aMapList(iSelection)
-                result 4
+                if iSelection = 0 then
+                    result 0
+                else
+                    sMapChosen := aMapList(iSelection)
+                    result 4
+                end if
             end if 
             if File.Exists ("maps/"+aMapList(iSelection)+".txt") then
                 open : iMapCurrentListFile, "maps/"+aMapList(iSelection)+".txt", get
