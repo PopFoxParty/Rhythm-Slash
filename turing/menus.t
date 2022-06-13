@@ -97,8 +97,9 @@ function Settings (var cKey : char, var iNoteDelay : int) : int
     var sInput : string
     
     Pic.Draw (pTitleBack, 0, 0, picCopy)
-    Draw.Text ( "Press space to set note delay or press backspace to go back:", 0, 600, font, white)
-    Draw.Text ( "Your note delay is " + intstr(iNoteDelay) + " ms.", 0, 580, font, white)
+    Draw.Text ("[Space/Enter] Set Note Delay", 20, 600, fontLarge, white)	
+    Draw.Text ("[Backspace] Go back", 20, 520, fontLarge, white)	
+    Draw.Text ( "Your note delay is " + intstr(iNoteDelay) + " ms.", 20, 450, font, white)
     loop
         if hasch then
             cKey := getchar
@@ -112,12 +113,13 @@ function Settings (var cKey : char, var iNoteDelay : int) : int
                     Pic.Draw (pTitleBack, 0, 0, picCopy)
                     if strintok (sInput) then
                         iNoteDelay := strint(sInput)
-                        Draw.Text ( "Delay set!", 0, 150, font, white)
+                        Draw.Text ( "Delay set!", 10, 150, font, white)
                     else
-                        Draw.Text ( "invalid integer!", 0, 150, font, white)
+                        Draw.Text ( "invalid integer!", 10, 150, font, white)
                     end if
-                    Draw.Text ( "Press space or enter to set note delay or press backspace to go back:", 0, 600, font, white)
-                    Draw.Text ( "Your note delay is " + intstr(iNoteDelay) + " ms.", 0, 580, font, white)
+                    Draw.Text ("[Space/Enter] Set Note Delay", 20, 600, fontLarge, white)	
+                    Draw.Text ("[Backspace] Go back", 20, 520, fontLarge, white)	
+                    Draw.Text ( "Your note delay is " + intstr(iNoteDelay) + " ms.", 20, 450, font, white)
                 label KEY_BACKSPACE : result 0
                 label KEY_ESC : quit
                 label :
