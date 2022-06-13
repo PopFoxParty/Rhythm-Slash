@@ -4,5 +4,6 @@
 "Quaoar" "Easy" Quaoar_easy Camellia
 "Quaoar" "Hard" Quaoar_hard Camellia
 "CICADA3302" "Impossible" CICADA3302_impossible Camellia
+"Highscore" "Hard" highscore_hard "Panda Eyes & Teminite"
 "Freedom Dive" "Impossible" Freedom_Dive_impossible Xi
 "northern_limit [feat. Sennzai]" "Beyond Limit" northern_limit_beyond_limit Kobaryo 
