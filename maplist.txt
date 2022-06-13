@@ -6,4 +6,5 @@
 "CICADA3302" "Impossible" CICADA3302_impossible Camellia
 "Highscore" "Hard" highscore_hard "Panda Eyes & Teminite"
 "Freedom Dive" "Impossible" Freedom_Dive_impossible Xi
+"cherry blossoms ..." "Hard" cherry_blossoms_explode_across_the_dying_horizon_hard sakuraburst
 "northern_limit [feat. Sennzai]" "Beyond Limit" northern_limit_beyond_limit Kobaryo 

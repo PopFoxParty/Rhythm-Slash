@@ -178,7 +178,7 @@ function MapSelect (var cKey : char, aMapList : array 1 .. * of string, var sMap
         Music.PlayFileStop
         open : iMapCurrentListFile, "maps/"+aMapList(iSelection)+".txt", get
         get : iMapCurrentListFile, sMapSelectSong
-        Draw.Text ("Now playing: "+sMapSelectSong, 100, 220, fontLarge, white)
+        Draw.Text ("Now playing: "+sMapSelectSong, 100, 220, font, white)
         if sMapSelectSong not= sMapSelectSongPrev then
             Music.PlayFileReturn ("music/"+sMapSelectSong)
             delay (1)
@@ -202,7 +202,7 @@ function MapSelect (var cKey : char, aMapList : array 1 .. * of string, var sMap
             if File.Exists ("maps/"+aMapList(iSelection)+".txt") then
                 open : iMapCurrentListFile, "maps/"+aMapList(iSelection)+".txt", get
                 get : iMapCurrentListFile, sMapSelectSong
-                Draw.Text ("Now playing: "+sMapSelectSong, 100, 220, fontLarge, white)
+                Draw.Text ("Now playing: "+sMapSelectSong, 100, 220, font, white)
                 if sMapSelectSong not= sMapSelectSongPrev then
                     Music.PlayFileStop
                     Music.PlayFileReturn ("music/"+sMapSelectSong)
@@ -388,7 +388,18 @@ function MainGame : int
                 Sprite.Hide (spExplosion)
                 Sprite.Hide (spProgressBar)
                 Sprite.Hide (spHealthBar)
-                result 4
+
+                % Hide all notes
+                for i : iLastBlue .. iBlueCount
+                    DestructNote(aBlueQ(i))
+                end for
+        
+                for i : iLastRed .. iRedCount
+                    DestructNote(aRedQ(i))
+                end for
+        
+                Draw.Cls
+                result 3
             end if
             
             % Prev state is how many keys were being pressed

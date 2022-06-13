@@ -85,7 +85,7 @@ procedure HitNotes (aTimings : array 1 .. * of int, var aColourQ : array 1 .. * 
         end if
 	Pic.Draw (pScore, 30, 580, picCopy)
 	Draw.Text ("Combo: "+intstr(iCombo), 50, 640, font, white)
-	Draw.Text ("Multiplier "+realstr(rMultiplier, 2), 50, 620, font, white)
+	Draw.Text ("Multiplier: "+realstr(rMultiplier, 2), 50, 620, font, white)
 	Draw.Text ("Score: "+realstr(rScore, 2), 50, 600, font, white)
 end HitNotes
 
