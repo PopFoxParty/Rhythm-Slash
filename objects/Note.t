@@ -19,7 +19,7 @@ class Note
         pNote := Pic.Scale (pNote, iScale, iScale)
 
         % Create sprite from image
-        spSprite := Sprite.New (pNote)\
+        spSprite := Sprite.New (pNote)
         
         % Hides sprite
         Sprite.Hide (spSprite)
