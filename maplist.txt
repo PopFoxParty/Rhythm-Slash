@@ -19,3 +19,8 @@
 "... Starry Sky" "Medium" Flying_Through_A_Starry_Sky_med "Toby Fox & Camellia"
 "... Starry Sky" "Hard" Flying_Through_A_Starry_Sky_hard "Toby Fox & Camellia"
 "... Starry Sky" "Insane" Flying_Through_A_Starry_Sky_insane "Toby Fox & Camellia"
+"O" "Medium" O_med seatrus
+"O" "Hard" O_hard seatrus
+"O" "Insane" O_insane seatrus
+"O" "Impossible" O_impossible seatrus
+"O" "Demon" O_demon seatrus
