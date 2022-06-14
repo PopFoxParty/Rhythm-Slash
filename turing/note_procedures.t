@@ -48,7 +48,7 @@ end MoveNotes
 
 % Check if note can be hit if key is pressed, then check how much score the player will get based on timing.
 procedure HitNotes (aTimings : array 1 .. * of int, var aColourQ : array 1 .. * of NoteClass, iCurrentTime : int, var iHitNote : int, var rScore : real, var iCombo : int, var rMultiplier : real, var iHealth, iOkays, iGreats, iPerfects : int)
-	if iHitNote <= upper(aTimings) then
+	if iHitNote <= upper(aTimings) and iCurrentTime + iTimingWindowOkay >= aTimings(1) then
 		if aTimings(iHitNote) < iCurrentTime + iTimingWindowOkay and aTimings(iHitNote) > iCurrentTime - iTimingWindowOkay then
 			GetMultiplier (rMultiplier, iCombo)
 			if aTimings(iHitNote) < iCurrentTime + iTimingWindowGreat and aTimings(iHitNote) > iCurrentTime - iTimingWindowGreat then
@@ -80,9 +80,7 @@ procedure HitNotes (aTimings : array 1 .. * of int, var aColourQ : array 1 .. * 
             Sprite.Show (spExplosion)
             bExplosionShown := true
         end if
-    else
-        put "no more notes!"
-        end if
+	end if
 	Pic.Draw (pScore, 30, 580, picCopy)
 	Draw.Text ("Combo: "+intstr(iCombo), 50, 640, font, white)
 	Draw.Text ("Multiplier: "+realstr(rMultiplier, 2), 50, 620, font, white)
