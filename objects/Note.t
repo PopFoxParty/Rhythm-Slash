@@ -4,19 +4,22 @@ class Note
     export SetPic, SetNoteTime, SetSpawnTime, GetTime, SetEndPos, CalculateSlope, Move, GetX
 
     % Delare variables
-    var pNote, iEndX, iNoteTime, iSpawnTime : int
+    var pNote, pNoteIn, iEndX, iNoteTime, iSpawnTime : int
     var rSlope : real     
 
     % Set the picture for notes
     procedure SetPic (inNote : string, iScale : int)
         % Create picture of note
-        pNote := Pic.FileNew (inNote)
+        pNoteIn := Pic.FileNew (inNote)
 
         % Create transparency
-        Pic.SetTransparentColour (pNote, black)
+        Pic.SetTransparentColour (pNoteIn, black)
 
         % Change the scale
-        pNote := Pic.Scale (pNote, iScale, iScale)
+        pNote := Pic.Scale (pNoteIn, iScale, iScale)
+
+        % Free the note before scaling
+        Pic.Free (pNoteIn)
 
         % Create sprite from image
         spSprite := Sprite.New (pNote)
@@ -29,7 +32,6 @@ class Note
 
         % Free the picture from memory
         Pic.Free (pNote)
-
     end SetPic
 
     % Sets variable for the timing of the note
