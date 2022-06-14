@@ -3,8 +3,19 @@
 "crystallized" "Hard" crystallized_hard Camellia
 "Quaoar" "Easy" Quaoar_easy Camellia
 "Quaoar" "Hard" Quaoar_hard Camellia
+"Quaoar" "Impossible" Quaoar_impossible Camellia
 "CICADA3302" "Impossible" CICADA3302_impossible Camellia
 "Highscore" "Hard" highscore_hard "Panda Eyes & Teminite"
 "Freedom Dive" "Impossible" Freedom_Dive_impossible Xi
 "cherry blossoms ..." "Hard" cherry_blossoms_explode_across_the_dying_horizon_hard sakuraburst
 "northern_limit [feat. Sennzai]" "Beyond Limit" northern_limit_beyond_limit Kobaryo 
+"Fallen" "Beginner" Fallen_beginner Zekk
+"Fallen" "Easy" Fallen_easy Zekk
+"Fallen" "Medium" Fallen_med Zekk
+"Fallen" "Hard" Fallen_hard Zekk
+"Fallen" "Insane" Fallen_insane Zekk
+"Fallen" "Impossible" Fallen_impossible Zekk
+"... Starry Sky" "Easy" Flying_Through_A_Starry_Sky_easy "Toby Fox & Camellia"
+"... Starry Sky" "Medium" Flying_Through_A_Starry_Sky_med "Toby Fox & Camellia"
+"... Starry Sky" "Hard" Flying_Through_A_Starry_Sky_hard "Toby Fox & Camellia"
+"... Starry Sky" "Insane" Flying_Through_A_Starry_Sky_insane "Toby Fox & Camellia"
