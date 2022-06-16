@@ -163,7 +163,6 @@ end HowTo
 % Map selection screen
 function MapSelect (var cKey : char, aMapList : array 1 .. * of string, var sMapChosen : string) : int
     Draw.Cls
-    iSelection := 1
     Pic.Draw (pMapSelect, 0, 0, picCopy)
     Text.ColourBack(black)
     Text.Colour (white)
