@@ -240,5 +240,4 @@ var iTotalNotes : int
 % Stores the players score percentage
 var rScorePercent : real
 
-% Stores the player's map selection
-iSelection := 1
+

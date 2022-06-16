@@ -170,6 +170,7 @@ function MapSelect (var cKey : char, aMapList : array 1 .. * of string, var sMap
     Draw.Text (aMapNameList(iSelection), 100, 420, fontVeryLarge, white)
     Draw.Text ("Difficulty: "+aMapDifficulty(iSelection), 100, 350, fontLarge, white)
     Draw.Text ("Artist: "+aMapArtist(iSelection), 100, 300, fontLarge, white)
+    Draw.Text ("Map: "+ intstr(iSelection) + "/" + intstr(upper(aMapArtist)), 100, 250, fontLarge, white)
     View.Update
     Music.PlayFileStop
     sMapSelectSongPrev := "none"
@@ -214,6 +215,7 @@ function MapSelect (var cKey : char, aMapList : array 1 .. * of string, var sMap
             Draw.Text (aMapNameList(iSelection), 100, 420, fontVeryLarge, white)
             Draw.Text ("Difficulty: "+aMapDifficulty(iSelection), 100, 350, fontLarge, white)
             Draw.Text ("Artist: "+aMapArtist(iSelection), 100, 300, fontLarge, white)
+            Draw.Text ("Map: "+ intstr(iSelection) + "/" + intstr(upper(aMapArtist)), 100, 250, fontLarge, white)
             View.Update
         end if
     end loop
